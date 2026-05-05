@@ -9,7 +9,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 DB_FILE = "pushed_links.txt"
-PROMPT_FILE = "agent_prompt.md"
+PROMPT_FILE = os.path.join("agents", "agent_prompt.md")
 
 # 初始化 Gemini
 if GEMINI_API_KEY:
