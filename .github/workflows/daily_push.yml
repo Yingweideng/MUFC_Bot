@@ -2,8 +2,13 @@ name: MUFC AI Bot Service
 
 on:
   schedule:
-    # 每 30 分钟检查一次实时消息，且包含早上 6 点的汇总
-    - cron: '*/30 * * * *'
+    # 对应北美东部夏令时 (EDT) 早上 6:00    
+    # 对应北美东部标准时间 (EST) 早上 5:00    
+    - cron: '0 10 * * *'
+  # 增加 push 触发，便于你在 feature 分支提交时立即测试  
+  push:    
+    branches:      
+      - 'feature/agent_solution'  # 必须保留这个，以便你在 GitHub UI 上手动选择分支执行    
   workflow_dispatch:
 
 jobs:
@@ -15,21 +20,23 @@ jobs:
       
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install Dependencies
-        run: pip install feedparser requests google-generativeai
+        run: pip install feedparser requests google-genai python-dotenv --upgrade
 
       - name: Execute Bot
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
+          # 提前开启 Node.js 24 强制选项以消除警告          
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         run: python mufc_bot.py
 
       - name: Commit and Push if updated
