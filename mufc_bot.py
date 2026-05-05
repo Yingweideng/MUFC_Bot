@@ -3,6 +3,9 @@ import requests
 import os
 from google import genai  # 修改这一行
 from datetime import datetime
+from dotenv import load_dotenv # 需要先 pip install python-dot
+
+load_dotenv()
 
 # ================= 配置区 =================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -10,7 +13,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 DB_FILE = "pushed_links.txt"
 # 确保路径与你的目录结构一致
-PROMPT_FILE = os.path.join("agent", "agent_prompt.md")
+PROMPT_FILE = os.path.join("agents", "agent_prompt.md")
 
 # 初始化新版 Gemini Client
 client = genai.Client(api_key=GEMINI_API_KEY)
@@ -51,20 +54,32 @@ def mufc_editor_agent(news_batch):
         print(f"Agent 运行异常: {e}")
         return None
 
-def send_to_telegram(text):
-    """发送消息到 Telegram"""
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown",
-        "disable_web_page_preview": False
-    }
-    try:
-        res = requests.post(url, json=payload)
-        res.raise_for_status()
-    except Exception as e:
-        print(f"发送 Telegram 失败: {e}")
+def send_to_telegram(text):    
+    #发送消息到 Telegram (使用 HTML 模式以提高兼容性)    
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"        
+    
+    # 将 Markdown 的加粗 ** 简单替换为 HTML 的 <b>，提高容错率    
+    # # 如果你的 Agent 输出包含很多 Markdown 语法，这一步可以确保基础样式保留    
+    html_text = text.replace("**​", "<b>").replace("​**", "</b>")         
+    
+    payload = {        
+        "chat_id": CHAT_ID,        
+        "text": text,  # 如果 AI 输出的是标准 Markdown，我们尝试先用 MarkdownV2 或 HTML        
+        "parse_mode": "HTML", # 切换为 HTML 模式        
+        "disable_web_page_preview": False    
+    }        
+    try:        # 第一次尝试：HTML 模式        
+        res = requests.post(url, json=payload)        
+        if res.status_code != 200:            # 如果 HTML 失败（可能是因为内容里有 < 或 >），则退回到纯文本模式发送，确保信息不丢失            
+            print(f"HTML 模式发送失败 ({res.status_code})，尝试纯文本模式...")            
+            payload.pop("parse_mode")            
+            res = requests.post(url, json=payload)                
+            
+        res.raise_for_status()        
+        print("Telegram 消息发送成功！")    
+    except Exception as e:        
+        print(f"发送 Telegram 最终失败: {e}")
+
 
 def run_workflow():
     """主工作流"""
