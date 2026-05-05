@@ -23,7 +23,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Dependencies
-        run: pip install feedparser requests google-genai
+        run: pip install feedparser requests google-genai --upgrade
 
       - name: Execute Bot
         env:

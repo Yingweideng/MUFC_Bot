@@ -1,7 +1,7 @@
 import feedparser
 import requests
 import os
-from genai import Client
+from google import genai  # 修改这一行
 from datetime import datetime
 
 # ================= 配置区 =================
