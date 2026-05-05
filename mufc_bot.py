@@ -14,7 +14,7 @@ PROMPT_FILE = os.path.join("agents", "agent_prompt.md")
 # 初始化 Gemini
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-3.1-flash-lite')
 else:
     print("错误: 未找到 GEMINI_API_KEY 环境变量")
 
