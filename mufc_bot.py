@@ -13,7 +13,7 @@ DB_FILE = "pushed_links.txt"
 PROMPT_FILE = os.path.join("agent", "agent_prompt.md")
 
 # 初始化新版 Gemini Client
-client = Client(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 def load_prompt():
     """从独立文件读取 Prompt 模板"""
