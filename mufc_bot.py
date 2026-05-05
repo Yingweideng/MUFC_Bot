@@ -1,7 +1,7 @@
 import feedparser
 import requests
 import os
-import google.generativeai as genai
+from genai import Client
 from datetime import datetime
 
 # ================= 配置区 =================
@@ -9,40 +9,43 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 DB_FILE = "pushed_links.txt"
-PROMPT_FILE = os.path.join("agents", "agent_prompt.md")
+# 确保路径与你的目录结构一致
+PROMPT_FILE = os.path.join("agent", "agent_prompt.md")
 
-# 初始化 Gemini
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-pro')
-else:
-    print("错误: 未找到 GEMINI_API_KEY 环境变量")
+# 初始化新版 Gemini Client
+client = Client(api_key=GEMINI_API_KEY)
 
 def load_prompt():
     """从独立文件读取 Prompt 模板"""
     if os.path.exists(PROMPT_FILE):
-        with open(PROMPT_FILE, 'r', encoding='utf-8') as f:
-            return f.read()
+        try:
+            with open(PROMPT_FILE, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            print(f"读取 Prompt 文件失败: {e}")
     return "请作为曼联编辑总结以下新闻：{news_batch}"
 
 def mufc_editor_agent(news_batch):
-    """Agent 核心逻辑"""
+    """新版 Agent 核心逻辑"""
     if not news_batch:
         return None
 
     template = load_prompt()
     current_date = datetime.now().strftime('%Y年%m月%d日')
     
-    # 使用 replace 注入变量，避免 format 带来的大括号转义问题
+    # 注入变量
     full_prompt = template.replace("{current_date}", current_date)
-    
     if "{news_batch}" in full_prompt:
         full_prompt = full_prompt.replace("{news_batch}", news_batch)
     else:
-        full_prompt += f"\n\n待处理数据内容：\n{news_batch}"
+        full_prompt += f"\n\n待处理新闻数据：\n{news_batch}"
 
     try:
-        response = model.generate_content(full_prompt)
+        # 使用新版 SDK 调用方法
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=full_prompt
+        )
         return response.text.strip()
     except Exception as e:
         print(f"Agent 运行异常: {e}")
@@ -84,18 +87,21 @@ def run_workflow():
     new_links = []
 
     for url in rss_sources:
-        feed = feedparser.parse(url)
-        for entry in feed.entries[:8]:
-            if entry.link not in pushed_links:
-                # 清洗摘要中的 HTML 标签
-                clean_summary = entry.summary.split('<')[0] if '<' in entry.summary else entry.summary
-                info = f"标题: {entry.title}\n摘要: {clean_summary}\n链接: {entry.link}"
-                collected_data.append(info)
-                new_links.append(entry.link)
+        try:
+            feed = feedparser.parse(url)
+            for entry in feed.entries[:8]:
+                if entry.link not in pushed_links:
+                    # 基础内容清洗
+                    clean_summary = entry.summary.split('<')[0] if '<' in entry.summary else entry.summary
+                    info = f"标题: {entry.title}\n摘要: {clean_summary}\n链接: {entry.link}"
+                    collected_data.append(info)
+                    new_links.append(entry.link)
+        except Exception as e:
+            print(f"抓取源 {url} 失败: {e}")
 
-    # 4. 如果有新内容，交给 Agent 处理并发送
+    # 4. 如果有新内容，交给 Agent 处理
     if collected_data:
-        print(f"发现 {len(collected_data)} 条新动态，正在调用 Agent...")
+        print(f"发现 {len(collected_data)} 条新动态，正在调用新版 Agent...")
         batch_text = "\n---\n".join(collected_data)
         report = mufc_editor_agent(batch_text)
         
