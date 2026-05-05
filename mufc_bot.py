@@ -43,7 +43,7 @@ def mufc_editor_agent(news_batch):
     try:
         # 使用新版 SDK 调用方法
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-3.1-flash-lite-preview',
             contents=full_prompt
         )
         return response.text.strip()
