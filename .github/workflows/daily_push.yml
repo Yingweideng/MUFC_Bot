@@ -15,21 +15,23 @@ jobs:
       
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install Dependencies
-        run: pip install feedparser requests google-genai --upgrade
+        run: pip install feedparser requests google-genai python-dotenv --upgrade
 
       - name: Execute Bot
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
+          # 提前开启 Node.js 24 强制选项以消除警告          
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         run: python mufc_bot.py
 
       - name: Commit and Push if updated
