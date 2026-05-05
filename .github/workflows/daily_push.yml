@@ -2,8 +2,9 @@ name: MUFC AI Bot Service
 
 on:
   schedule:
-    # 每 30 分钟检查一次实时消息，且包含早上 6 点的汇总
-    - cron: '*/30 * * * *'
+    # 对应北美东部夏令时 (EDT) 早上 6:00    
+    # 对应北美东部标准时间 (EST) 早上 5:00    
+    - cron: '0 10 * * *'
   workflow_dispatch:
 
 jobs:
