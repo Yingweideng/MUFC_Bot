@@ -5,6 +5,10 @@ on:
     # 对应北美东部夏令时 (EDT) 早上 6:00    
     # 对应北美东部标准时间 (EST) 早上 5:00    
     - cron: '0 10 * * *'
+  # 增加 push 触发，便于你在 feature 分支提交时立即测试  
+  push:    
+    branches:      
+      - 'feature/agent_solution'  # 必须保留这个，以便你在 GitHub UI 上手动选择分支执行    
   workflow_dispatch:
 
 jobs:
