@@ -95,7 +95,11 @@ def run_workflow():
     # 3. 抓取新闻源
     rss_sources = [
         "https://feeds.bbci.co.uk/sport/football/teams/manchester-united/rss.xml",
-        "https://www.skysports.com/rss/11667"
+        "https://www.skysports.com/rss/11667",
+        "https://thepeoplesperson.com/feed/",
+        "https://www.footballinsider247.com/category/teams/manchester-united/feed/",
+        "https://oldtraffordfaithful.com/feed/"
+
     ]
     
     collected_data = []
@@ -119,6 +123,9 @@ def run_workflow():
         print(f"发现 {len(collected_data)} 条新动态，正在调用新版 Agent...")
         batch_text = "\n---\n".join(collected_data)
         report = mufc_editor_agent(batch_text)
+
+        print("Agent 生成的报告：")
+        print(report)
         
         if report:
             send_to_telegram(report)
